@@ -1,10 +1,12 @@
 import "./styles.css";
 import "./views/todo-view.js";
 import { Router } from "@vaadin/router";
+import { register } from "@polymer/polymer/lib/utils/telemetry";
 
 //Wait for the load event before registering the router. This allows the browser to render the page before we run JavaScript, and ensure that the page feels fast.
 window.addEventListener("load", () => {
   initRouter();
+  registerSW();
 });
 
 function initRouter() {
@@ -31,4 +33,18 @@ function initRouter() {
         )
     }
   ]);
+}
+
+async function registerSW() {
+  //Ensure that the browser supports ServiceWorker before trying to register it.
+  if ('serviceWorker' in navigator) { 
+    try {
+      //Register the ServiceWorker. Note that the path of the ServiceWorker determines its scope.
+      await navigator.serviceWorker.register('./sw.js'); 
+    } catch (e) {
+      console.log('ServiceWorker registration failed. Sorry about that.', e);
+    }
+  } else {
+    console.log('Your browser does not support ServiceWorker.');
+  }
 }
