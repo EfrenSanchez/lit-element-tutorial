@@ -1,5 +1,5 @@
 //Dependencies
-import { LitElement, html } from "lit-element";
+import { html } from "lit-element";
 import { connect } from "pwa-helpers";
 // Redux
 import { store } from "../redux/store.js";
@@ -17,8 +17,9 @@ import {
   updateFilter,
   clearCompleted
 } from "../redux/actions.js";
+import { BaseView } from "./base-view.js";
 
-class TodoView extends connect(store)(LitElement) {
+class TodoView extends connect(store)(BaseView) {
   static get properties() {
     return {
       todos: { type: Array },
@@ -121,17 +122,6 @@ class TodoView extends connect(store)(LitElement) {
     store.dispatch(clearCompleted());
   }
 
-  // applyFilter(todos) {
-  //   switch (this.filter) {
-  //     case VisibilityFilters.SHOW_ACTIVE:
-  //       return todos.filter(todo => !todo.complete);
-  //     case VisibilityFilters.SHOW_COMPLETED:
-  //       return todos.filter(todo => todo.complete);
-  //     default:
-  //       return todos;
-  //   }
-  // }
-
   shortcutListener(e) {
     if (e.key === "Enter") {
       this.addTodo();
@@ -140,10 +130,6 @@ class TodoView extends connect(store)(LitElement) {
 
   updateTask(e) {
     this.task = e.target.value;
-  }
-
-  createRenderRoot() {
-    return this;
   }
 }
 
