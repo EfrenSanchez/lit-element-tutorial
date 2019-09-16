@@ -1,17 +1,24 @@
+//Dependencies
 import { LitElement, html } from "lit-element";
+import { connect } from "pwa-helpers";
+// Redux
+import { store } from "../redux/store.js";
+import { VisibilityFilters, getVisibleTodosSelector } from '../redux/reducer.js';
+// Components
 import "@vaadin/vaadin-text-field";
 import "@vaadin/vaadin-button";
 import "@vaadin/vaadin-checkbox";
 import "@vaadin/vaadin-radio-button/vaadin-radio-button";
 import "@vaadin/vaadin-radio-button/vaadin-radio-group";
 
-const VisibilityFilters = {
-  SHOW_ALL: "All",
-  SHOW_ACTIVE: "Active",
-  SHOW_COMPLETED: "Completed"
-};
+import {
+  addTodo,
+  updateTodoStatus,
+  updateFilter,
+  clearCompleted
+} from "../redux/actions.js";
 
-class TodoView extends LitElement {
+class TodoView extends connect(store)(LitElement) {
   static get properties() {
     return {
       todos: { type: Array },
@@ -20,11 +27,9 @@ class TodoView extends LitElement {
     };
   }
 
-  constructor() {
-    super();
-    this.todos = [];
-    this.filter = VisibilityFilters.SHOW_ALL;
-    this.task = "";
+  stateChanged(state) {
+    this.todos = getVisibleTodosSelector(state);
+    this.filter = state.filter;
   }
 
   render() {
@@ -54,7 +59,7 @@ class TodoView extends LitElement {
       <div class="input-layout" @keyup="${this.shortcutListener}">
         <vaadin-text-field
           placeholder="Task"
-          value="${this.task}"
+          value="${this.task || ""}"
           @change="${this.updateTask}"
         ></vaadin-text-field>
         <vaadin-button theme="primary" @click="${this.addTodo}">
@@ -62,7 +67,7 @@ class TodoView extends LitElement {
         </vaadin-button>
         <!-- Todo List -->
         <div class="todos-list">
-          ${this.applyFilter(this.todos).map(
+          ${this.todos.map(
             todo => html`
               <div class="todo-item">
                 <vaadin-checkbox
@@ -99,16 +104,33 @@ class TodoView extends LitElement {
 
   addTodo() {
     if (this.task) {
-      this.todos = [
-        ...this.todos,
-        {
-          task: this.task,
-          complete: false
-        }
-      ];
+      store.dispatch(addTodo(this.task));
       this.task = "";
     }
   }
+
+  updateTodoStatus(updatedTodo, complete) {
+    store.dispatch(updateTodoStatus(updatedTodo, complete));
+  }
+
+  filterChanged(e) {
+    store.dispatch(updateFilter(e.detail.value));
+  }
+
+  clearCompleted() {
+    store.dispatch(clearCompleted());
+  }
+
+  // applyFilter(todos) {
+  //   switch (this.filter) {
+  //     case VisibilityFilters.SHOW_ACTIVE:
+  //       return todos.filter(todo => !todo.complete);
+  //     case VisibilityFilters.SHOW_COMPLETED:
+  //       return todos.filter(todo => todo.complete);
+  //     default:
+  //       return todos;
+  //   }
+  // }
 
   shortcutListener(e) {
     if (e.key === "Enter") {
@@ -118,31 +140,6 @@ class TodoView extends LitElement {
 
   updateTask(e) {
     this.task = e.target.value;
-  }
-
-  updateTodoStatus(updateTodo, complete) {
-    this.todos = this.todos.map(todo =>
-      updateTodo === todo ? { ...updateTodo, complete } : todo
-    );
-  }
-
-  filterChanged(e) {
-    this.filter = e.target.value;
-  }
-
-  clearCompleted() {
-    this.todos = this.todos.filter(todo => !todo.complete);
-  }
-
-  applyFilter(todos) {
-    switch (this.filter) {
-      case VisibilityFilters.SHOW_ACTIVE:
-        return todos.filter(todo => !todo.complete);
-      case VisibilityFilters.SHOW_COMPLETED:
-        return todos.filter(todo => todo.complete);
-      default:
-        return todos;
-    }
   }
 
   createRenderRoot() {
